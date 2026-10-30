@@ -8,7 +8,8 @@ App personnelle de musculation pour débutant : elle dit quelle série faire, co
 
 - Débutant, salle de sport complète. Objectif : tonique sans prendre de volume, au service de la boxe anglaise, du foot et du ski. Priorité : renforcer le bas du dos.
 - 3 séances principales par semaine, aux jours choisis par l'utilisateur, dans l'ordre A → B → C → A… Séance D optionnelle (gainage, bas du dos, mobilité, cardio court), proposée sans être imposée.
-- Chaque séance principale enchaîne 4 blocs : **explosivité** → **force** (4 à 8 répétitions) → **unilatéral** → **gainage / bas du dos**.
+- Chaque séance (A, B, C et D) commence par un **échauffement à la corde à sauter** chronométré : 3 manches de 3 min au départ, 1 min de repos entre les manches, +30 s par manche quand les 3 sont faites, jusqu'à 3 × 5 min (15 min). *(ajouté le 2026-10-30)*
+- Chaque séance principale enchaîne ensuite 4 blocs : **explosivité** → **force** (4 à 8 répétitions) → **unilatéral** → **gainage / bas du dos**.
 - Blocs de 6 semaines (18 séances principales) : semaine 1 = apprentissage et calibrage avec charges légères ; semaines 2 à 5 = progression ; semaine 6 = semaine allégée. Puis nouveau bloc avec variantes et bilan écrit.
 - Repos par défaut, modulables par l'IA dans ces plages : explosivité 90–120 s, force 120–180 s, unilatéral et accessoires 60–90 s, gainage 45–60 s.
 - Chaque exercice : 3 points clés (placement, mouvement, erreur à éviter) + lien vidéo de démonstration.

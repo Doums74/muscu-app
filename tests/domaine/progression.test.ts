@@ -136,3 +136,33 @@ test('sans seance preparee -> locale du type suivant', () => {
   const r = choisirSeance(programme(), null, [s('A')], maintenant);
   expect(r.seance).toMatchObject({ source: 'locale', type: 'B' });
 });
+
+const avecCorde = () => {
+  const p = programme();
+  p.seances.B = [{ exerciceId: 'corde-a-sauter', series: 3, repsMin: 180, repsMax: 300, chargeDepart: 0, repos: 60 }, ...p.seances.B];
+  return p;
+};
+const cordeFaite = (secondes: number[], cible: number) => {
+  const h = realisee('corde-a-sauter', secondes.map(x => serie(x, 0)));
+  h.exercices[0].prevu.series = secondes.map(() => ({ reps: cible, charge: 0 }));
+  return h;
+};
+
+test('echauffement : 3 x 3 min au depart', () => {
+  expect(genererSeanceLocale(avecCorde(), [], 'B', maintenant).exercices[0].series).toEqual(Array(3).fill({ reps: 180, charge: 0 }));
+});
+
+test('echauffement : +30 s par manche quand tout est fait', () => {
+  const h = [cordeFaite([180, 180, 180], 180)];
+  expect(genererSeanceLocale(avecCorde(), h, 'B', maintenant).exercices[0].series[0].reps).toBe(210);
+});
+
+test('echauffement : plafonne a 5 min par manche (15 min au total)', () => {
+  const h = [cordeFaite([300, 300, 300], 300)];
+  expect(genererSeanceLocale(avecCorde(), h, 'B', maintenant).exercices[0].series[0].reps).toBe(300);
+});
+
+test('echauffement : manche raccourcie -> meme duree', () => {
+  const h = [cordeFaite([210, 150, 210], 210)];
+  expect(genererSeanceLocale(avecCorde(), h, 'B', maintenant).exercices[0].series[0].reps).toBe(210);
+});

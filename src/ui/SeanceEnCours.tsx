@@ -25,13 +25,15 @@ export interface EtatSeance {
   iExo: number;
   iSerie: number;
   finRepos: number | null;
+  debutEffort?: number | null; // échauffement chronométré en cours
 }
 
-export const NOMS_BLOCS = { explosivite: 'Explosivité', force: 'Force', unilateral: 'Unilatéral', gainage: 'Gainage · bas du dos' } as const;
+export const NOMS_BLOCS = { echauffement: 'Échauffement', explosivite: 'Explosivité', force: 'Force', unilateral: 'Unilatéral', gainage: 'Gainage · bas du dos' } as const;
 
 export function cible(ex: ExercicePrevu, iSerie: number): string {
   const def = trouverExercice(ex.exerciceId);
   const s = ex.series[iSerie];
+  if (def?.bloc === 'echauffement') return formaterDuree(s.reps);
   if (def?.mesure === 'secondes') return s.charge > 0 ? `${s.reps} s · ${s.charge} kg` : `${s.reps} s`;
   return def && def.increment > 0 ? `${s.reps} reps · ${s.charge} kg` : `${s.reps} reps`;
 }
@@ -106,6 +108,18 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, onAbandon, stock
     return () => clearInterval(id);
   }, [etat.finRepos]);
 
+  useEffect(() => {
+    if (etat.debutEffort == null) return;
+    const debutEffort = etat.debutEffort;
+    const id = setInterval(() => {
+      if (maintenant() - debutEffort >= serie.reps * 1000) {
+        alerterFinRepos();
+        enregistrer({ reps: serie.reps, charge: 0, difficulte: 'correct' });
+      } else rafraichir(n => n + 1);
+    }, 250);
+    return () => clearInterval(id);
+  }, [etat.debutEffort]);
+
   function changer(suivant: EtatSeance) {
     stockage.ecrire(CLES.enCours, suivant);
     setEtat(suivant);
@@ -128,11 +142,15 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, onAbandon, stock
     if (prevue > 0 && faite.charge > prevue * 1.2 + (def?.increment ?? 0)) {
       if (!window.confirm(`Tu as saisi ${faite.charge} kg alors que ${prevue} kg sont prévus. C'est bien ça ?`)) return;
     }
+    enregistrer(faite);
+  }
+
+  function enregistrer(faite: SerieRealisee) {
     const realisees = etat.realisees.map((r, i) => (i === etat.iExo ? [...r, faite] : r));
     const exercices = etat.exercices.map((e, i) => (i === etat.iExo ? ajusterApresSerie(e, etat.iSerie, faite) : e));
     const dernierExo = etat.iExo === exercices.length - 1;
     const derniereSerie = etat.iSerie === ex.series.length - 1;
-    const base = { ...etat, exercices, realisees };
+    const base = { ...etat, exercices, realisees, debutEffort: null };
 
     if (dernierExo && derniereSerie) return terminer(base);
     changer({
@@ -161,6 +179,24 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, onAbandon, stock
     </div>
   );
 
+  if (etat.debutEffort != null) {
+    const restant = Math.max(0, serie.reps - Math.floor((maintenant() - etat.debutEffort) / 1000));
+    const ecoule = () => Math.min(serie.reps, Math.round((maintenant() - (etat.debutEffort ?? 0)) / 1000));
+    return (
+      <main class="ecran repos">
+        {barre}
+        <h2>{def?.nom}</h2>
+        <p class="ensuite">
+          Manche {etat.iSerie + 1}/{ex.series.length}
+        </p>
+        <div class="chrono">{formaterDuree(restant)}</div>
+        <button class="principal" onClick={() => enregistrer({ reps: ecoule(), charge: 0, difficulte: 'correct' })}>
+          Arrêter l'échauffement
+        </button>
+      </main>
+    );
+  }
+
   if (etat.finRepos !== null) {
     const restant = creerMinuteur({ fin: etat.finRepos }, maintenant).restant();
     return (
@@ -173,6 +209,37 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, onAbandon, stock
         </p>
         <button class="principal" onClick={() => changer({ ...etat, finRepos: null })}>
           Passer le repos
+        </button>
+        <button class="discret" onClick={terminerPlusTot}>
+          Terminer la séance
+        </button>
+      </main>
+    );
+  }
+
+  if (def?.bloc === 'echauffement') {
+    return (
+      <main class="ecran seance">
+        {barre}
+        <p class="bloc">{NOMS_BLOCS.echauffement}</p>
+        <h2>{def.nom}</h2>
+        <p class="serie">
+          Manche {etat.iSerie + 1}/{ex.series.length}
+        </p>
+        <p class="cible">{cible(ex, etat.iSerie)}</p>
+        <details class="technique">
+          <summary>Technique</summary>
+          <ul>
+            {def.pointsCles.map(p => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+          <a href={def.video} target="_blank" rel="noopener noreferrer">
+            Voir une démonstration vidéo
+          </a>
+        </details>
+        <button class="principal" onClick={() => changer({ ...etat, debutEffort: maintenant() })}>
+          Démarrer
         </button>
         <button class="discret" onClick={terminerPlusTot}>
           Terminer la séance

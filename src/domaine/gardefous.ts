@@ -4,16 +4,20 @@ import { semaineDuBloc } from './rotation';
 import type { Bloc, Exercice, ExercicePrevu, Programme, SeancePrevue, SeanceRealisee, TypeSeance } from './types';
 
 export const PLAGES_REPOS: Record<Bloc, [number, number]> = {
+  echauffement: [30, 120],
   explosivite: [90, 120],
   force: [120, 180],
   unilateral: [60, 90],
   gainage: [45, 60],
 };
 
-const ORDRE_BLOCS: Bloc[] = ['explosivite', 'force', 'unilateral', 'gainage'];
+const ORDRE_BLOCS: Bloc[] = ['echauffement', 'explosivite', 'force', 'unilateral', 'gainage'];
+const BLOCS_OBLIGATOIRES: Bloc[] = ['explosivite', 'force', 'unilateral', 'gainage'];
 const TYPES: TypeSeance[] = ['A', 'B', 'C', 'D'];
 const MAX_SERIES = 6;
 const PLAGE_REPS = { reps: [1, 30], secondes: [5, 120] } as const;
+/** Plage de la cible (reps ou secondes) ; l'échauffement se compte en minutes. */
+const plageCible = (def: Exercice): readonly [number, number] => (def.bloc === 'echauffement' ? [60, 1800] : PLAGE_REPS[def.mesure]);
 
 const borner = (x: number, min: number, max: number) => Math.min(max, Math.max(min, x));
 const estNombre = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
@@ -50,7 +54,7 @@ function corrigerExercice(
   historique: SeanceRealisee[],
   avertir: (m: string) => void,
 ): ExercicePrevu {
-  const [rMin, rMax] = PLAGE_REPS[def.mesure];
+  const [rMin, rMax] = plageCible(def);
   const [reposMin, reposMax] = PLAGES_REPOS[def.bloc];
 
   let series = ex.series.slice(0, MAX_SERIES);
@@ -163,11 +167,11 @@ export function validerProgramme(brut: unknown): { programme: Programme | null; 
     if (type === 'D') {
       if (!blocs.includes('gainage')) erreurs.push('Séance D : il faut au moins un exercice de gainage.');
     } else {
-      const manquants = ORDRE_BLOCS.filter(b => !blocs.includes(b));
+      const manquants = BLOCS_OBLIGATOIRES.filter(b => !blocs.includes(b));
       if (manquants.length) erreurs.push(`Séance ${type} : bloc(s) manquant(s) : ${manquants.join(', ')}.`);
       const rangs = blocs.map(b => ORDRE_BLOCS.indexOf(b));
       if (rangs.some((r, i) => i > 0 && r < rangs[i - 1]))
-        erreurs.push(`Séance ${type} : les blocs doivent suivre l'ordre explosivité → force → unilatéral → gainage.`);
+        erreurs.push(`Séance ${type} : les blocs doivent suivre l'ordre échauffement → explosivité → force → unilatéral → gainage.`);
     }
   }
 

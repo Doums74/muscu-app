@@ -141,3 +141,42 @@ test('charge tres superieure a la prevue : confirmation demandee', () => {
   expect(confirm).toHaveBeenCalled();
   expect(screen.getByText('Série 1/3')).toBeTruthy();
 });
+
+const corde = () => ({ exerciceId: 'corde-a-sauter', series: [{ reps: 900, charge: 0 }], repsMin: 900, repsMax: 900, repos: 60 });
+
+test('echauffement : chrono de 15 min puis exercice suivant automatiquement', async () => {
+  let t = 0;
+  const stockage = stockageMemoire();
+  render(<SeanceEnCours seance={seance([corde(), prevuDe('goblet-squat', 16, 2)])} douleurDos={false} onTerminer={() => {}} stockage={stockage} maintenant={() => t} />);
+  expect(screen.getByText('Échauffement')).toBeTruthy();
+  expect(screen.getByText('15:00')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Démarrer' }));
+  t = 300_000;
+  expect(await screen.findByText('10:00', {}, { timeout: 1500 })).toBeTruthy();
+  t = 901_000;
+  expect(await screen.findByText('Repos', {}, { timeout: 1500 })).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Passer le repos' }));
+  expect(screen.getByRole('heading', { name: 'Goblet squat' })).toBeTruthy();
+});
+
+test('echauffement arrete plus tot : duree reelle enregistree', () => {
+  let t = 0;
+  let resultat: SeanceRealisee | null = null;
+  render(<SeanceEnCours seance={seance([corde()])} douleurDos={false} onTerminer={s => (resultat = s)} stockage={stockageMemoire()} maintenant={() => t} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Démarrer' }));
+  t = 600_000;
+  fireEvent.click(screen.getByRole('button', { name: 'Arrêter l\'échauffement' }));
+  expect(resultat!.exercices[0].series).toEqual([{ reps: 600, charge: 0, difficulte: 'correct' }]);
+});
+
+test('echauffement en cours : repris apres rechargement', () => {
+  let t = 0;
+  const stockage = stockageMemoire();
+  const props = { seance: seance([corde(), prevuDe('goblet-squat', 16, 2)]), douleurDos: false, onTerminer: () => {}, stockage, maintenant: () => t };
+  const { unmount } = render(<SeanceEnCours {...props} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Démarrer' }));
+  unmount();
+  t = 60_000;
+  render(<SeanceEnCours {...props} />);
+  expect(screen.getByText('14:00')).toBeTruthy();
+});

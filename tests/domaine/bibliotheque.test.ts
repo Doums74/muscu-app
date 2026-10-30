@@ -31,3 +31,7 @@ test('gainage du bas du dos present', () => {
 test('trouverExercice renvoie undefined pour un id inconnu', () => {
   expect(trouverExercice('inexistant')).toBeUndefined();
 });
+
+test('corde a sauter : echauffement chronometre au poids du corps', () => {
+  expect(trouverExercice('corde-a-sauter')).toMatchObject({ bloc: 'echauffement', mesure: 'secondes', increment: 0, risqueDos: false });
+});

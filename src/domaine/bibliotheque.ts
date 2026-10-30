@@ -4,6 +4,13 @@ const yt = (recherche: string) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(recherche).replace(/%20/g, '+')}`;
 
 export const BIBLIOTHEQUE: Exercice[] = [
+  // --- Échauffement ---
+  {
+    id: 'corde-a-sauter', nom: 'Corde à sauter', bloc: 'echauffement', mesure: 'secondes', increment: 0, risqueDos: false,
+    pointsCles: ['Sauts bas sur l\'avant des pieds, genoux souples', 'La corde tourne avec les poignets, coudes près du corps', 'Rythme régulier et respiration calme : on s\'échauffe, on ne s\'épuise pas'],
+    video: yt('corde à sauter technique débutant boxe'),
+  },
+
   // --- Explosivité ---
   {
     id: 'saut-boite', nom: 'Saut sur box', bloc: 'explosivite', mesure: 'reps', increment: 0, risqueDos: false,

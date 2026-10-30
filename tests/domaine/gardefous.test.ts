@@ -8,7 +8,7 @@ function seance(exercices: SeancePrevue['exercices'], semaine = 1): SeancePrevue
 const prevue = (id: string, charge: number, semaine = 1) => seance([prevuDe(id, charge)], semaine);
 
 test('plages de repos', () => {
-  expect(PLAGES_REPOS).toEqual({ explosivite: [90, 120], force: [120, 180], unilateral: [60, 90], gainage: [45, 60] });
+  expect(PLAGES_REPOS).toEqual({ echauffement: [30, 120], explosivite: [90, 120], force: [120, 180], unilateral: [60, 90], gainage: [45, 60] });
 });
 
 test('plafonne une hausse de charge a +5 % ou un increment', () => {
@@ -144,4 +144,28 @@ test('programme sans seance D ou D sans gainage -> erreur', () => {
 test('le programme de demo respecte les garde-fous', async () => {
   const { PROGRAMME_DEMO } = await import('../../src/demo');
   expect(validerProgramme(PROGRAMME_DEMO).erreurs).toEqual([]);
+});
+
+test('echauffement de 15 min accepte tel quel (pas ramene a 120 s)', () => {
+  const corde = { exerciceId: 'corde-a-sauter', series: [{ reps: 900, charge: 0 }], repsMin: 900, repsMax: 900, repos: 60 };
+  const r = validerSeance(seance([corde, prevuDe('goblet-squat', 12)]), []);
+  expect(r.seance!.exercices[0].series[0].reps).toBe(900);
+  expect(r.avertissements).toEqual([]);
+});
+
+test('echauffement plafonne a 30 min', () => {
+  const corde = { exerciceId: 'corde-a-sauter', series: [{ reps: 5000, charge: 0 }], repsMin: 900, repsMax: 900, repos: 60 };
+  expect(validerSeance(seance([corde]), []).seance!.exercices[0].series[0].reps).toBe(1800);
+});
+
+test('programme avec echauffement en tete : valide', () => {
+  const p = programme();
+  for (const t of ['A', 'B', 'C', 'D'] as const) p.seances[t] = [{ ...ep('corde-a-sauter', 60, 900, 900), chargeDepart: 0 }, ...p.seances[t]];
+  expect(validerProgramme(p).erreurs).toEqual([]);
+});
+
+test('echauffement place apres un autre bloc -> erreur d\'ordre', () => {
+  const p = programme();
+  p.seances.A = [p.seances.A[0], { ...ep('corde-a-sauter', 60, 900, 900), chargeDepart: 0 }, ...p.seances.A.slice(1)];
+  expect(validerProgramme(p).programme).toBeNull();
 });
