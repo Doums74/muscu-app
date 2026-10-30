@@ -1,5 +1,6 @@
 import { trouverExercice } from './bibliotheque';
-import { arrondiInf, augmentationMax, chargeMax, derniereFois } from './calcul';
+import { arrondiInf, augmentationMax, chargeReference, derniereFois } from './calcul';
+import { semaineDuBloc } from './rotation';
 import type { Bloc, Exercice, ExercicePrevu, Programme, SeancePrevue, SeanceRealisee, TypeSeance } from './types';
 
 export const PLAGES_REPOS: Record<Bloc, [number, number]> = {
@@ -58,7 +59,7 @@ function corrigerExercice(
   const derniere = derniereFois(historique, def.id)[0];
   let plafond = Infinity;
   if (derniere && def.increment > 0) {
-    const max = chargeMax(derniere);
+    const max = chargeReference(derniere, def.increment);
     plafond = semaine === 6 ? arrondiInf(max * 0.9, def.increment) : max + augmentationMax(max, def.increment);
   }
 
@@ -93,6 +94,9 @@ export function validerSeance(
     return { seance: null, avertissements: ['Séance préparée illisible : elle est ignorée.'] };
   }
 
+  const semaine = semaineDuBloc(historique, brut.blocId);
+  if (semaine !== brut.semaine) avertir(`Séance annoncée en semaine ${brut.semaine}, recalculée en semaine ${semaine}.`);
+
   const exercices: ExercicePrevu[] = [];
   for (const ex of brut.exercices) {
     const def = trouverExercice(ex.exerciceId);
@@ -104,7 +108,7 @@ export function validerSeance(
       avertir(`${def.nom} : aucune série prévue, exercice retiré.`);
       continue;
     }
-    exercices.push(corrigerExercice(ex, def, brut.semaine, historique, avertir));
+    exercices.push(corrigerExercice(ex, def, semaine, historique, avertir));
   }
 
   if (exercices.length === 0) {
@@ -113,7 +117,7 @@ export function validerSeance(
   }
 
   return {
-    seance: { ...brut, source: brut.source ?? 'claude', genereeLe: brut.genereeLe ?? '', exercices },
+    seance: { ...brut, semaine, source: brut.source ?? 'claude', genereeLe: brut.genereeLe ?? '', exercices },
     avertissements,
   };
 }
@@ -150,6 +154,10 @@ export function validerProgramme(brut: unknown): { programme: Programme | null; 
         erreurs.push(`Séance ${type} : repos de ${def.nom} hors plage (${min}-${max} s).`);
       if ((ex.repsMin as number) > (ex.repsMax as number))
         erreurs.push(`Séance ${type} : ${def.nom} a repsMin > repsMax.`);
+      if (!Number.isInteger(ex.series) || (ex.series as number) < 1 || (ex.series as number) > 6)
+        erreurs.push(`Séance ${type} : ${def.nom} doit avoir de 1 à 6 séries.`);
+      if ((ex.repsMin as number) < 1) erreurs.push(`Séance ${type} : ${def.nom} a repsMin < 1.`);
+      if ((ex.chargeDepart as number) < 0) erreurs.push(`Séance ${type} : ${def.nom} a une charge de départ négative.`);
     }
 
     if (type === 'D') {

@@ -1,5 +1,5 @@
 import { trouverExercice } from './bibliotheque';
-import { arrondiInf, arrondiProche, chargeMax, derniereFois } from './calcul';
+import { arrondiInf, arrondiProche, chargeReference, derniereFois } from './calcul';
 import { validerSeance } from './gardefous';
 import { prochainType, semaineDuBloc } from './rotation';
 import type { ExercicePrevu, ExerciceProgramme, ExerciceRealise, Programme, SeancePrevue, SeanceRealisee, TypeSeance } from './types';
@@ -20,14 +20,19 @@ function exerciceSuivant(ep: ExerciceProgramme, historique: SeanceRealisee[], se
   let reps = ep.repsMax;
 
   if (increment === 0) {
+    // Poids du corps : on progresse en répétitions (ou secondes) dans la fourchette du programme.
     charge = 0;
+    reps = ep.repsMin;
     if (derniere) {
       const pas = def?.mesure === 'secondes' ? 5 : 1;
-      const plafond = def?.mesure === 'secondes' ? 120 : 30;
-      reps = Math.min(plafond, Math.max(...derniere.series.map(s => s.reps)) + pas);
+      const cibles = derniere.prevu.series.map(s => s.reps);
+      const cibleAtteinte =
+        derniere.series.length >= cibles.length && derniere.series.every((s, i) => s.reps >= (cibles[i] ?? cibles[0]));
+      reps = cibleAtteinte ? Math.max(...derniere.series.map(s => s.reps)) + pas : cibles[0];
+      reps = Math.min(ep.repsMax, Math.max(ep.repsMin, reps));
     }
   } else if (derniere) {
-    const base = chargeMax(derniere);
+    const base = chargeReference(derniere, increment);
     const toutReussi =
       derniere.series.length >= derniere.prevu.series.length && derniere.series.every(s => s.reps >= ep.repsMax);
     if (semaine === 6) charge = arrondiInf(base * 0.9, increment);
@@ -76,11 +81,14 @@ export function choisirSeance(
   maintenant: Date,
 ): { seance: SeancePrevue; avertissements: string[] } {
   const avertissements: string[] = [];
-  if (prochaine && prochaine.blocId === programme.blocId && !historique.some(h => h.id === prochaine.id)) {
+  const tour = prochainType(historique, programme.blocId);
+  const utilisable = prochaine && prochaine.blocId === programme.blocId && !historique.some(h => h.id === prochaine.id);
+  if (utilisable && prochaine.type !== 'D' && prochaine.type !== tour) {
+    avertissements.push(`Séance préparée (${prochaine.type}) ignorée : c'est au tour de la séance ${tour}.`);
+  } else if (utilisable) {
     const v = validerSeance(prochaine, historique);
     avertissements.push(...v.avertissements);
     if (v.seance) return { seance: v.seance, avertissements };
   }
-  const type = prochainType(historique, programme.blocId);
-  return { seance: genererSeanceLocale(programme, historique, type, maintenant), avertissements };
+  return { seance: genererSeanceLocale(programme, historique, tour, maintenant), avertissements };
 }

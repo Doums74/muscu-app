@@ -54,9 +54,32 @@ test('un seul echec -> meme charge', () => {
 });
 
 test('poids du corps -> +1 rep', () => {
-  const h = [realisee('bird-dog', [serie(8, 0), serie(9, 0), serie(7, 0)])];
+  const h = [realisee('bird-dog', [serie(8, 0), serie(9, 0), serie(8, 0)])];
   const ex = genererSeanceLocale(programme(), h, 'B', maintenant).exercices.find(e => e.exerciceId === 'bird-dog')!;
   expect(ex.series).toEqual([{ reps: 10, charge: 0 }, { reps: 10, charge: 0 }, { reps: 10, charge: 0 }]);
+});
+
+test('poids du corps : premiere fois au bas de la fourchette', () => {
+  const ex = genererSeanceLocale(programme(), [], 'A', maintenant).exercices.find(e => e.exerciceId === 'bird-dog')!;
+  expect(ex.series[0]).toEqual({ reps: 6, charge: 0 });
+});
+
+test('poids du corps : plafonne au haut de la fourchette', () => {
+  const h = [realisee('bird-dog', [serie(10, 0), serie(12, 0), serie(10, 0)])];
+  const ex = genererSeanceLocale(programme(), h, 'B', maintenant).exercices.find(e => e.exerciceId === 'bird-dog')!;
+  expect(ex.series[0].reps).toBe(10);
+});
+
+test('poids du corps : cible ratee -> meme cible', () => {
+  const h = [realisee('bird-dog', [serie(9, 0), serie(7, 0), serie(8, 0)])];
+  const ex = genererSeanceLocale(programme(), h, 'B', maintenant).exercices.find(e => e.exerciceId === 'bird-dog')!;
+  expect(ex.series[0].reps).toBe(8);
+});
+
+test('une faute de frappe (200 au lieu de 20) ne fait pas exploser la charge suivante', () => {
+  const h = [realisee('squat-barre', [serie(8, 200), serie(8, 20), serie(8, 20)])];
+  h[0].exercices[0].prevu.series = h[0].exercices[0].prevu.series.map(x => ({ ...x, charge: 20 }));
+  expect(squat(genererSeanceLocale(programme(), h, 'B', maintenant)).series[0].charge).toBe(25);
 });
 
 test('gainage en secondes -> +5 s', () => {
@@ -96,6 +119,17 @@ test('seance preparee invalide -> locale avec avertissement', () => {
   const r = choisirSeance(programme(), { ...preparee(), exercices: [] } as SeancePrevue, [], maintenant);
   expect(r.seance.source).toBe('locale');
   expect(r.avertissements.length).toBeGreaterThan(0);
+});
+
+test('seance preparee qui n\'est plus dans la rotation -> ignoree', () => {
+  const r = choisirSeance(programme(), preparee({ type: 'B', id: '2026-11-01-B' }), [s('A'), s('B')], maintenant);
+  expect(r.seance).toMatchObject({ source: 'locale', type: 'C' });
+  expect(r.avertissements.join(' ')).toContain('C');
+});
+
+test('seance D preparee -> acceptee quel que soit le tour', () => {
+  const d = preparee({ type: 'D', exercices: [{ exerciceId: 'planche', series: [{ reps: 30, charge: 0 }], repsMin: 20, repsMax: 40, repos: 45 }] });
+  expect(choisirSeance(programme(), d, [s('A')], maintenant).seance.source).toBe('claude');
 });
 
 test('sans seance preparee -> locale du type suivant', () => {

@@ -1,11 +1,11 @@
 import { PLAGES_REPOS, validerProgramme, validerSeance } from '../../src/domaine/gardefous';
 import type { ExerciceProgramme, Programme, SeancePrevue } from '../../src/domaine/types';
-import { prevuDe, realisee } from '../aides';
+import { prevuDe, realisee, s } from '../aides';
 
-function seance(exercices: SeancePrevue['exercices'], semaine = 2): SeancePrevue {
+function seance(exercices: SeancePrevue['exercices'], semaine = 1): SeancePrevue {
   return { id: '2026-11-02-A', type: 'A', blocId: 'b1', semaine, source: 'claude', genereeLe: '2026-11-01', exercices };
 }
-const prevue = (id: string, charge: number, semaine = 2) => seance([prevuDe(id, charge)], semaine);
+const prevue = (id: string, charge: number, semaine = 1) => seance([prevuDe(id, charge)], semaine);
 
 test('plages de repos', () => {
   expect(PLAGES_REPOS).toEqual({ explosivite: [90, 120], force: [120, 180], unilateral: [60, 90], gainage: [45, 60] });
@@ -64,10 +64,25 @@ test('exercice en secondes limite a 120 s', () => {
   expect(validerSeance(seance([ex]), []).seance!.exercices[0].series[0].reps).toBe(120);
 });
 
+const quinze = () => [...Array.from({ length: 14 }, () => s('B')), realisee('squat-barre', [{ reps: 8, charge: 40, difficulte: 'correct' }])];
+
 test('semaine 6 allege a 90 %', () => {
-  const h = [realisee('squat-barre', [{ reps: 8, charge: 40, difficulte: 'correct' }])];
-  const r = validerSeance(prevue('squat-barre', 40, 6), h);
+  const r = validerSeance(prevue('squat-barre', 40, 6), quinze());
   expect(r.seance!.exercices[0].series[0].charge).toBe(35);
+});
+
+test('la semaine est recalculee depuis l\'historique (semaine 6 annoncee en 5)', () => {
+  const r = validerSeance(prevue('squat-barre', 42.5, 5), quinze());
+  expect(r.seance!.semaine).toBe(6);
+  expect(r.seance!.exercices[0].series[0].charge).toBe(35);
+  expect(r.avertissements.join(' ')).toContain('semaine');
+});
+
+test('une faute de frappe dans l\'historique ne releve pas le plafond', () => {
+  const h = [realisee('goblet-squat', [{ reps: 8, charge: 200, difficulte: 'correct' }])];
+  h[0].exercices[0].prevu.series = h[0].exercices[0].prevu.series.map(x => ({ ...x, charge: 20 }));
+  const r = validerSeance(prevue('goblet-squat', 60), h);
+  expect(r.seance!.exercices[0].series[0].charge).toBe(24);
 });
 
 test('poids du corps -> charge 0, charge negative -> 0', () => {
@@ -109,6 +124,14 @@ test('programme avec id inconnu, repos hors plage ou repsMin > repsMax -> erreur
   const p = programme();
   p.seances.C = [ep('saut-boite', 100), ep('inexistant', 150), ep('goblet-squat', 400), ep('fente-arriere', 75, 10, 8), ep('bird-dog', 50)];
   expect(validerProgramme(p).erreurs.length).toBeGreaterThanOrEqual(3);
+});
+
+test('programme avec 0 serie, repsMin 0 ou charge negative -> erreurs', () => {
+  const p = programme();
+  p.seances.A = [{ ...ep('saut-boite', 100), series: 0 }, { ...ep('goblet-squat', 150), chargeDepart: -5 }, { ...ep('fente-arriere', 75), repsMin: 0 }, ep('bird-dog', 50)];
+  const r = validerProgramme(p);
+  expect(r.programme).toBeNull();
+  expect(r.erreurs.length).toBeGreaterThanOrEqual(3);
 });
 
 test('programme sans seance D ou D sans gainage -> erreur', () => {
