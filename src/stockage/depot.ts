@@ -1,3 +1,4 @@
+import { validerProgramme } from '../domaine/gardefous';
 import type { Programme, SeancePrevue, SeanceRealisee } from '../domaine/types';
 import { ClientGitHub, ErreurGitHub } from './github';
 import { CLES, type Stockage } from './local';
@@ -34,6 +35,18 @@ function messageErreur(e: unknown): string {
 
 const attente = (stockage: Stockage) => stockage.lire<SeanceRealisee[]>(CLES.attente) ?? [];
 
+/** Ajoute une séance terminée à la file d'attente locale (sans doublon), avant tout envoi. */
+export function mettreEnAttente(stockage: Stockage, seance: SeanceRealisee): void {
+  stockage.ecrire(CLES.attente, fusionner(attente(stockage), [seance]));
+}
+
+/** État issu du cache local, disponible tout de suite au lancement ; null s'il n'y a jamais eu de chargement. */
+export function etatDepuisCache(stockage: Stockage): Etat | null {
+  const cache = stockage.lire<Cache>(CLES.cache);
+  if (!cache) return null;
+  return { ...cache, historique: fusionner(cache.historique, attente(stockage)), horsLigne: false, erreur: null };
+}
+
 export async function chargerEtat(client: ClientGitHub, stockage: Stockage): Promise<Etat> {
   try {
     if (attente(stockage).length) await synchroniser(client, stockage).catch(() => 0);
@@ -42,13 +55,19 @@ export async function chargerEtat(client: ClientGitHub, stockage: Stockage): Pro
       client.lire<SeancePrevue>('prochaine-seance.json'),
       client.lire<SeanceRealisee[]>(HISTORIQUE),
     ]);
+    let erreur: string | null = null;
+    let programmeValide = programme?.contenu ?? null;
+    if (programmeValide && !validerProgramme(programmeValide).programme) {
+      erreur = 'programme.json invalide — programme précédent conservé. Relance « prépare ma séance » sur le Mac.';
+      programmeValide = stockage.lire<Cache>(CLES.cache)?.programme ?? null;
+    }
     const cache: Cache = {
-      programme: programme?.contenu ?? null,
+      programme: programmeValide,
       prochaine: prochaine?.contenu ?? null,
       historique: historique?.contenu ?? [],
     };
     stockage.ecrire(CLES.cache, cache);
-    return { ...cache, historique: fusionner(cache.historique, attente(stockage)), horsLigne: false, erreur: null };
+    return { ...cache, historique: fusionner(cache.historique, attente(stockage)), horsLigne: false, erreur };
   } catch (e) {
     const cache = stockage.lire<Cache>(CLES.cache) ?? { programme: null, prochaine: null, historique: [] };
     return { ...cache, historique: fusionner(cache.historique, attente(stockage)), horsLigne: true, erreur: messageErreur(e) };
@@ -60,7 +79,7 @@ export async function enregistrerSeance(
   stockage: Stockage,
   seance: SeanceRealisee,
 ): Promise<'envoyee' | 'en-attente'> {
-  stockage.ecrire(CLES.attente, fusionner(attente(stockage), [seance]));
+  mettreEnAttente(stockage, seance);
   try {
     await synchroniser(client, stockage);
     return 'envoyee';

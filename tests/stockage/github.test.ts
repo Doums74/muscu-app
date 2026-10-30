@@ -41,3 +41,19 @@ test('ecrire cree un fichier sans sha', async () => {
   await new ClientGitHub(config, gh.fetchFn).ecrire('nouveau.json', { a: 1 }, null, 'msg');
   expect(gh.lireJson('nouveau.json')).toEqual({ a: 1 });
 });
+
+test('abandonne une requete qui ne repond pas', async () => {
+  const gh = fauxGitHub({ 'a.json': 1 });
+  gh.etat.bloque = true;
+  await expect(new ClientGitHub(config, gh.fetchFn, 30).lire('a.json')).rejects.toBeTruthy();
+});
+
+test('verifierAcces : depot accessible en ecriture', async () => {
+  expect(await new ClientGitHub(config, fauxGitHub().fetchFn).verifierAcces()).toEqual({ ecriture: true });
+});
+
+test('verifierAcces : depot introuvable -> ErreurGitHub 404', async () => {
+  const gh = fauxGitHub();
+  gh.etat.depotExiste = false;
+  await expect(new ClientGitHub(config, gh.fetchFn).verifierAcces()).rejects.toMatchObject({ statut: 404 });
+});

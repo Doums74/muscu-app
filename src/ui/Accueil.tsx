@@ -52,6 +52,8 @@ export function Accueil({ etat, maintenant, enCours, onCommencer, onReprendre, o
   }
 
   const seance = douleurDos ? appliquerDouleurDos(choix.seance, historique) : choix.seance;
+  const confirmerAbandon = () =>
+    !enCours || window.confirm('Une séance est en cours. L\'abandonner pour en commencer une nouvelle ?');
 
   return (
     <main class="ecran accueil">
@@ -106,12 +108,13 @@ export function Accueil({ etat, maintenant, enCours, onCommencer, onReprendre, o
         </div>
       </section>
 
-      <button class="principal" onClick={() => onCommencer(seance, douleurDos === true)}>
+      <button class={enCours ? 'secondaire' : 'principal'} onClick={() => confirmerAbandon() && onCommencer(seance, douleurDos === true)}>
         Commencer
       </button>
       <button
         class="secondaire"
         onClick={() => {
+          if (!confirmerAbandon()) return;
           const d = genererSeanceLocale(programme, historique, 'D', maintenant);
           onCommencer(douleurDos ? appliquerDouleurDos(d, historique) : d, douleurDos === true);
         }}

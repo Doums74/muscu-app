@@ -2,7 +2,7 @@ import { render } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { fetchDemo, stockageDemo } from './demo';
 import type { SeancePrevue, SeanceRealisee } from './domaine/types';
-import { chargerEtat, type Etat } from './stockage/depot';
+import { chargerEtat, etatDepuisCache, type Etat } from './stockage/depot';
 import { ClientGitHub, type Config } from './stockage/github';
 import { CLES, stockageNavigateur } from './stockage/local';
 import { Accueil, type Ecran } from './ui/Accueil';
@@ -27,8 +27,9 @@ type Vue =
 function App() {
   const [config, setConfig] = useState(() => stockage.lire<Config>(CLES.config));
   const client = useMemo(() => (config ? new ClientGitHub(config, fetchFn) : null), [config]);
-  const [etat, setEtat] = useState<Etat | null>(null);
-  const [vue, setVue] = useState<Vue>({ nom: config ? 'chargement' : 'config' });
+  // Démarrage immédiat sur le cache local ; le réseau rafraîchit ensuite en arrière-plan.
+  const [etat, setEtat] = useState<Etat | null>(() => etatDepuisCache(stockage));
+  const [vue, setVue] = useState<Vue>({ nom: !config ? 'config' : etat ? 'accueil' : 'chargement' });
   const [maintenant, setMaintenant] = useState(() => new Date());
 
   async function recharger() {
@@ -42,6 +43,15 @@ function App() {
     void recharger();
   }, [client]);
 
+  // Retour sur l'app (Android la garde souvent en arrière-plan) : on relit la séance préparée sur le Mac.
+  useEffect(() => {
+    const surVisibilite = () => {
+      if (document.visibilityState === 'visible' && vue.nom === 'accueil') void recharger();
+    };
+    document.addEventListener('visibilitychange', surVisibilite);
+    return () => document.removeEventListener('visibilitychange', surVisibilite);
+  }, [client, vue.nom]);
+
   const enCours = stockage.lire<EtatSeance>(CLES.enCours);
 
   if (vue.nom === 'config' || !client) {
@@ -53,6 +63,7 @@ function App() {
           setConfig(c);
           setVue({ nom: 'chargement' });
         }}
+        onRetour={client && etat ? () => setVue({ nom: 'accueil' }) : undefined}
       />
     );
   }
@@ -66,6 +77,7 @@ function App() {
         douleurDos={vue.douleurDos}
         stockage={stockage}
         onTerminer={s => setVue({ nom: 'fin', seance: s })}
+        onAbandon={() => setVue({ nom: 'accueil' })}
       />
     );
 

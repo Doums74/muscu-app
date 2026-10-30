@@ -8,10 +8,17 @@ export function fauxGitHub(fichiers: Record<string, unknown> = {}) {
   let version = 0;
   for (const [chemin, contenu] of Object.entries(fichiers)) depot.set(chemin, { texte: JSON.stringify(contenu), sha: `sha${++version}` });
 
-  const etat = { horsLigne: false, statutForce: 0, conflitsRestants: 0, appels: [] as { methode: string; chemin: string; init?: RequestInit }[] };
+  const etat = { horsLigne: false, bloque: false, ecriture: true, depotExiste: true, statutForce: 0, conflitsRestants: 0, appels: [] as { methode: string; chemin: string; init?: RequestInit }[] };
 
   const fetchFn = (async (url: string, init?: RequestInit) => {
     if (etat.horsLigne) throw new TypeError('Failed to fetch');
+    if (etat.bloque)
+      return new Promise((_, rejeter) => init?.signal?.addEventListener('abort', () => rejeter(init.signal!.reason)));
+    const rep0 = (statut: number, corps: unknown) => new Response(JSON.stringify(corps), { status: statut });
+    if (!String(url).includes('/contents/')) {
+      if (etat.statutForce) return rep0(etat.statutForce, {});
+      return etat.depotExiste ? rep0(200, { permissions: { push: etat.ecriture } }) : rep0(404, { message: 'Not Found' });
+    }
     const chemin = decodeURIComponent(String(url).split('/contents/')[1]);
     const methode = init?.method ?? 'GET';
     etat.appels.push({ methode, chemin, init });

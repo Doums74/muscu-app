@@ -5,7 +5,10 @@ import type { SeancePrevue, SeanceRealisee } from '../../src/domaine/types';
 import { prevuDe } from '../aides';
 import { stockageMemoire } from '../stockage/fauxGitHub';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const seance = (exercices = [prevuDe('squat-barre', 40), prevuDe('goblet-squat', 16, 2)]): SeancePrevue => ({
   id: '2026-11-02-A', type: 'A', blocId: 'b1', semaine: 2, source: 'claude', genereeLe: '', exercices,
@@ -70,7 +73,7 @@ test('terminer renvoie toutes les series saisies', () => {
   expect(resultat!).toMatchObject({ id: '2026-11-02-A', type: 'A', blocId: 'b1', semaine: 2, douleurDos: true });
   expect(resultat!.exercices[0].series).toEqual([
     { reps: 8, charge: 18, difficulte: 'correct' },
-    { reps: 7, charge: 16, difficulte: 'dur' },
+    { reps: 7, charge: 18, difficulte: 'dur' },
   ]);
   expect(stockage.lire(CLES.enCours)).toBeNull();
 });
@@ -91,4 +94,50 @@ test('exercice au poids du corps : pas de champ charge, cible en secondes', () =
   expect(screen.getByText('30 s')).toBeTruthy();
   expect(screen.queryByLabelText('Charge (kg)')).toBeNull();
   expect(champ('Secondes').value).toBe('30');
+});
+
+test('terminer met la seance en file d\'attente avant d\'effacer la seance en cours', () => {
+  const stockage = stockageMemoire();
+  render(<SeanceEnCours seance={seance([prevuDe('goblet-squat', 16, 1)])} douleurDos={false} onTerminer={() => {}} stockage={stockage} maintenant={() => 0} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Correct' }));
+  expect((stockage.lire(CLES.attente) as SeanceRealisee[]).map(x => x.id)).toEqual(['2026-11-02-A']);
+  expect(stockage.lire(CLES.enCours)).toBeNull();
+});
+
+test('terminer sans aucune serie abandonne sans enregistrer', () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  const stockage = stockageMemoire();
+  const onTerminer = vi.fn();
+  const onAbandon = vi.fn();
+  render(<SeanceEnCours seance={seance()} douleurDos={false} onTerminer={onTerminer} onAbandon={onAbandon} stockage={stockage} maintenant={() => 0} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Terminer la séance' }));
+  expect(onAbandon).toHaveBeenCalled();
+  expect(onTerminer).not.toHaveBeenCalled();
+  expect(stockage.lire(CLES.attente)).toBeNull();
+  expect(stockage.lire(CLES.enCours)).toBeNull();
+});
+
+test('la charge saisie est reprise a la serie suivante du meme exercice', () => {
+  render(<SeanceEnCours seance={seance()} douleurDos={false} onTerminer={() => {}} stockage={stockageMemoire()} maintenant={() => 0} />);
+  saisir('Charge (kg)', '42.5');
+  fireEvent.click(screen.getByRole('button', { name: 'Correct' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Passer le repos' }));
+  expect(champ('Charge (kg)').value).toBe('42.5');
+});
+
+test('virgule decimale acceptee', () => {
+  let resultat: SeanceRealisee | null = null;
+  render(<SeanceEnCours seance={seance([prevuDe('goblet-squat', 16, 1)])} douleurDos={false} onTerminer={s => (resultat = s)} stockage={stockageMemoire()} maintenant={() => 0} />);
+  saisir('Charge (kg)', '17,5');
+  fireEvent.click(screen.getByRole('button', { name: 'Correct' }));
+  expect(resultat!.exercices[0].series[0].charge).toBe(17.5);
+});
+
+test('charge tres superieure a la prevue : confirmation demandee', () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  render(<SeanceEnCours seance={seance()} douleurDos={false} onTerminer={() => {}} stockage={stockageMemoire()} maintenant={() => 0} />);
+  saisir('Charge (kg)', '400');
+  fireEvent.click(screen.getByRole('button', { name: 'Correct' }));
+  expect(confirm).toHaveBeenCalled();
+  expect(screen.getByText('Série 1/3')).toBeTruthy();
 });

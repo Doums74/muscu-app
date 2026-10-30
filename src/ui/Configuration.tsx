@@ -4,11 +4,12 @@ import { CLES, stockageNavigateur, type Stockage } from '../stockage/local';
 
 interface Props {
   onEnregistre(config: Config): void;
+  onRetour?(): void;
   stockage?: Stockage;
   fetchFn?: typeof fetch;
 }
 
-export function Configuration({ onEnregistre, stockage = stockageNavigateur, fetchFn }: Props) {
+export function Configuration({ onEnregistre, onRetour, stockage = stockageNavigateur, fetchFn }: Props) {
   const existante = stockage.lire<Config>(CLES.config);
   const [proprietaire, setProprietaire] = useState(existante?.proprietaire ?? 'Doums74');
   const [depot, setDepot] = useState(existante?.depot ?? 'muscu-data');
@@ -22,14 +23,20 @@ export function Configuration({ onEnregistre, stockage = stockageNavigateur, fet
     setEnTest(true);
     setMessage(null);
     try {
-      await new ClientGitHub(config, fetchFn).lire('programme.json');
+      const { ecriture } = await new ClientGitHub(config, fetchFn).verifierAcces();
+      if (!ecriture) {
+        setMessage("Cette clé n'a pas le droit d'écriture sur le dépôt. Donne-lui « Contents : Read and write ».");
+        return;
+      }
       stockage.ecrire(CLES.config, config);
       onEnregistre(config);
     } catch (err) {
       setMessage(
-        err instanceof ErreurGitHub
-          ? `Clé refusée par GitHub (${err.statut}). Vérifie le propriétaire, le dépôt et les droits « Contents : Read and write ».`
-          : 'Pas de connexion à GitHub. Réessaie avec du réseau.',
+        !(err instanceof ErreurGitHub)
+          ? 'Pas de connexion à GitHub. Réessaie avec du réseau.'
+          : err.statut === 404
+            ? `Dépôt ${config.proprietaire}/${config.depot} introuvable avec cette clé. Vérifie le nom et que la clé donne accès à ce dépôt.`
+            : `Clé refusée par GitHub (${err.statut}). Vérifie qu'elle n'a pas expiré.`,
       );
     } finally {
       setEnTest(false);
@@ -58,6 +65,11 @@ export function Configuration({ onEnregistre, stockage = stockageNavigateur, fet
           {enTest ? 'Test en cours…' : 'Tester et enregistrer'}
         </button>
       </form>
+      {existante && onRetour && (
+        <button class="discret" onClick={onRetour}>
+          Annuler
+        </button>
+      )}
       <p class="note">La clé reste uniquement sur ce téléphone.</p>
     </main>
   );

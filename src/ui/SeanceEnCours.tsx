@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { ajusterApresSerie } from '../domaine/ajustements';
 import { trouverExercice } from '../domaine/bibliotheque';
 import type { Difficulte, ExercicePrevu, SeancePrevue, SeanceRealisee, SerieRealisee } from '../domaine/types';
+import { mettreEnAttente } from '../stockage/depot';
 import { CLES, stockageNavigateur, type Stockage } from '../stockage/local';
 import { alerterFinRepos, creerMinuteur, formaterDuree, garderEcranAllume } from './minuteur';
 
@@ -9,6 +10,7 @@ interface Props {
   seance: SeancePrevue;
   douleurDos: boolean;
   onTerminer(s: SeanceRealisee): void;
+  onAbandon?(): void;
   stockage?: Stockage;
   maintenant?: () => number;
 }
@@ -64,7 +66,10 @@ function resultat(seance: SeancePrevue, etat: EtatSeance, douleurDos: boolean): 
   };
 }
 
-export function SeanceEnCours({ seance, douleurDos, onTerminer, stockage = stockageNavigateur, maintenant = Date.now }: Props) {
+/** Accepte « 17,5 » comme « 17.5 » (clavier français). */
+const nombre = (texte: string) => Number(texte.trim().replace(',', '.')) || 0;
+
+export function SeanceEnCours({ seance, douleurDos, onTerminer, onAbandon, stockage = stockageNavigateur, maintenant = Date.now }: Props) {
   const [etat, setEtat] = useState(() => etatInitial(seance, douleurDos, stockage, maintenant));
   const [, rafraichir] = useState(0);
   const ex = etat.exercices[etat.iExo];
@@ -73,10 +78,15 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, stockage = stock
   const [reps, setReps] = useState(String(serie.reps));
   const [charge, setCharge] = useState(String(serie.charge));
 
+  // Charge pré-remplie : celle de la série précédente du même exercice (si elle n'a pas été ratée), sinon la prévue.
+  const precedente = etat.realisees[etat.iExo][etat.iSerie - 1];
+  const rateePrecedente = precedente && precedente.difficulte === 'dur' && precedente.reps < ex.series[etat.iSerie - 1].reps;
+  const chargeProposee = precedente && !rateePrecedente ? precedente.charge : serie.charge;
+
   useEffect(() => {
     setReps(String(serie.reps));
-    setCharge(String(serie.charge));
-  }, [etat.iExo, etat.iSerie, serie.reps, serie.charge]);
+    setCharge(String(chargeProposee));
+  }, [etat.iExo, etat.iSerie, serie.reps, chargeProposee]);
 
   useEffect(() => {
     let liberer = () => {};
@@ -102,16 +112,22 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, stockage = stock
   }
 
   function terminer(final: EtatSeance) {
+    const r = resultat(seance, final, douleurDos);
+    mettreEnAttente(stockage, r); // d'abord en sécurité, ensuite seulement on efface la séance en cours
     stockage.effacer(CLES.enCours);
-    onTerminer(resultat(seance, final, douleurDos));
+    onTerminer(r);
   }
 
   function valider(difficulte: Difficulte) {
     const faite: SerieRealisee = {
-      reps: Number(reps) || 0,
-      charge: def && def.increment > 0 ? Number(charge) || 0 : serie.charge,
+      reps: nombre(reps),
+      charge: def && def.increment > 0 ? nombre(charge) : serie.charge,
       difficulte,
     };
+    const prevue = serie.charge;
+    if (prevue > 0 && faite.charge > prevue * 1.2 + (def?.increment ?? 0)) {
+      if (!window.confirm(`Tu as saisi ${faite.charge} kg alors que ${prevue} kg sont prévus. C'est bien ça ?`)) return;
+    }
     const realisees = etat.realisees.map((r, i) => (i === etat.iExo ? [...r, faite] : r));
     const exercices = etat.exercices.map((e, i) => (i === etat.iExo ? ajusterApresSerie(e, etat.iSerie, faite) : e));
     const dernierExo = etat.iExo === exercices.length - 1;
@@ -128,6 +144,13 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, stockage = stock
   }
 
   function terminerPlusTot() {
+    if (etat.realisees.every(r => r.length === 0)) {
+      if (window.confirm('Abandonner cette séance ? Rien ne sera enregistré.')) {
+        stockage.effacer(CLES.enCours);
+        onAbandon?.();
+      }
+      return;
+    }
     if (window.confirm('Terminer la séance maintenant ? Les séries faites seront enregistrées.')) terminer(etat);
   }
 
@@ -190,7 +213,7 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, stockage = stock
         {def && def.increment > 0 && (
           <label>
             Charge (kg)
-            <input type="number" inputMode="decimal" step="0.5" value={charge} onInput={e => setCharge(e.currentTarget.value)} />
+            <input type="text" inputMode="decimal" value={charge} onInput={e => setCharge(e.currentTarget.value)} />
           </label>
         )}
       </div>

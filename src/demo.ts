@@ -29,6 +29,7 @@ export function fetchDemo(): typeof fetch {
   const rep = (statut: number, corps: unknown) => new Response(JSON.stringify(corps), { status: statut });
 
   return (async (url: string | URL | Request, init?: RequestInit) => {
+    if (!String(url).includes('/contents/')) return rep(200, { permissions: { push: true } });
     const chemin = decodeURIComponent(String(url).split('/contents/')[1]);
     if ((init?.method ?? 'GET') === 'GET') {
       const texte = fichiers.get(chemin);

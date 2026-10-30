@@ -49,7 +49,7 @@ export function FinSeance({ seance, client, stockage, onRetour }: Props) {
           </li>
         ))}
       </ul>
-      <button class="principal" onClick={onRetour} disabled={statut === 'envoi'}>
+      <button class="principal" onClick={onRetour}>
         Retour à l'accueil
       </button>
     </main>

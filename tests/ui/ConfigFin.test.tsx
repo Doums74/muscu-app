@@ -34,6 +34,45 @@ test('configuration : affiche l\'erreur si la cle est refusee', async () => {
   expect(onEnregistre).not.toHaveBeenCalled();
 });
 
+test('configuration : depot introuvable -> message precis, rien enregistre', async () => {
+  const gh = fauxGitHub();
+  gh.etat.depotExiste = false;
+  const onEnregistre = vi.fn();
+  render(<Configuration stockage={stockageMemoire()} fetchFn={gh.fetchFn} onEnregistre={onEnregistre} />);
+  remplir('Clé d\'accès (token)', 'tk');
+  fireEvent.click(screen.getByRole('button', { name: 'Tester et enregistrer' }));
+  expect(await screen.findByText(/introuvable/)).toBeTruthy();
+  expect(onEnregistre).not.toHaveBeenCalled();
+});
+
+test('configuration : cle en lecture seule -> refusee', async () => {
+  const gh = fauxGitHub();
+  gh.etat.ecriture = false;
+  const onEnregistre = vi.fn();
+  render(<Configuration stockage={stockageMemoire()} fetchFn={gh.fetchFn} onEnregistre={onEnregistre} />);
+  remplir('Clé d\'accès (token)', 'tk');
+  fireEvent.click(screen.getByRole('button', { name: 'Tester et enregistrer' }));
+  expect(await screen.findByText(/écriture/)).toBeTruthy();
+  expect(onEnregistre).not.toHaveBeenCalled();
+});
+
+test('configuration : bouton Annuler quand une config existe deja', () => {
+  const stockage = stockageMemoire();
+  stockage.ecrire(CLES.config, { proprietaire: 'Doums74', depot: 'muscu-data', token: 'tk' });
+  const onRetour = vi.fn();
+  render(<Configuration stockage={stockage} onEnregistre={() => {}} onRetour={onRetour} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+  expect(onRetour).toHaveBeenCalled();
+});
+
+test('fin de seance : retour possible tout de suite', () => {
+  const gh = fauxGitHub();
+  gh.etat.bloque = true;
+  const client = new ClientGitHub({ proprietaire: 'moi', depot: 'd', token: 't' }, gh.fetchFn, 60_000);
+  render(<FinSeance seance={realisee('squat-barre', [{ reps: 8, charge: 40, difficulte: 'correct' }])} client={client} stockage={stockageMemoire()} onRetour={() => {}} />);
+  expect((screen.getByRole('button', { name: 'Retour à l\'accueil' }) as HTMLButtonElement).disabled).toBe(false);
+});
+
 test('fin de seance : envoyee', async () => {
   const gh = fauxGitHub({ 'historique.json': [] });
   const client = new ClientGitHub({ proprietaire: 'moi', depot: 'd', token: 't' }, gh.fetchFn);

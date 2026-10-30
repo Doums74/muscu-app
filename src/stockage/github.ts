@@ -28,11 +28,29 @@ export class ClientGitHub {
   constructor(
     private config: Config,
     private fetchFn: typeof fetch = (...args) => fetch(...args),
+    private delaiMs = 8000,
   ) {}
 
-  private url(chemin: string) {
+  private racine() {
     const { proprietaire, depot } = this.config;
-    return `https://api.github.com/repos/${encodeURIComponent(proprietaire)}/${encodeURIComponent(depot)}/contents/${encodeURIComponent(chemin)}`;
+    return `https://api.github.com/repos/${encodeURIComponent(proprietaire)}/${encodeURIComponent(depot)}`;
+  }
+
+  private url(chemin: string) {
+    return `${this.racine()}/contents/${encodeURIComponent(chemin)}`;
+  }
+
+  /** Requête abandonnée après `delaiMs` : un réseau faible à la salle ne doit pas bloquer l'app. */
+  private requete(url: string, init: RequestInit) {
+    return this.fetchFn(url, { ...init, signal: AbortSignal.timeout(this.delaiMs) });
+  }
+
+  /** Vérifie que le dépôt existe et est accessible avec ce token. */
+  async verifierAcces(): Promise<{ ecriture: boolean }> {
+    const rep = await this.requete(this.racine(), { headers: this.entetes(), cache: 'no-store' });
+    if (!rep.ok) throw new ErreurGitHub(rep.status, `Dépôt inaccessible (${rep.status}).`);
+    const corps = (await rep.json()) as { permissions?: { push?: boolean } };
+    return { ecriture: corps.permissions?.push === true };
   }
 
   private entetes() {
@@ -44,7 +62,7 @@ export class ClientGitHub {
   }
 
   async lire<T>(chemin: string): Promise<{ contenu: T; sha: string } | null> {
-    const rep = await this.fetchFn(this.url(chemin), { headers: this.entetes(), cache: 'no-store' });
+    const rep = await this.requete(this.url(chemin), { headers: this.entetes(), cache: 'no-store' });
     if (rep.status === 404) return null;
     if (!rep.ok) throw new ErreurGitHub(rep.status, `Lecture de ${chemin} impossible (${rep.status}).`);
     const corps = (await rep.json()) as { content: string; sha: string };
@@ -52,7 +70,7 @@ export class ClientGitHub {
   }
 
   async ecrire(chemin: string, contenu: unknown, sha: string | null, message: string): Promise<string> {
-    const rep = await this.fetchFn(this.url(chemin), {
+    const rep = await this.requete(this.url(chemin), {
       method: 'PUT',
       headers: this.entetes(),
       body: JSON.stringify({ message, content: versBase64(JSON.stringify(contenu, null, 2) + '\n'), ...(sha ? { sha } : {}) }),

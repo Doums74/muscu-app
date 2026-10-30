@@ -4,7 +4,10 @@ import type { Etat } from '../../src/stockage/depot';
 import type { ExerciceProgramme, Programme, SeancePrevue } from '../../src/domaine/types';
 import { s } from '../aides';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const ep = (exerciceId: string, repos = 150): ExerciceProgramme => ({ exerciceId, series: 3, repsMin: 6, repsMax: 8, chargeDepart: 30, repos });
 const programme: Programme = {
@@ -69,4 +72,14 @@ test('erreur et seance en cours a reprendre', () => {
   expect(screen.getByText('Pas de connexion — données en cache.')).toBeTruthy();
   fireEvent.click(screen.getByRole('button', { name: 'Reprendre la séance en cours' }));
   expect(a.onReprendre).toHaveBeenCalled();
+});
+
+test('seance en cours : Commencer demande confirmation avant d\'abandonner', () => {
+  vi.spyOn(window, 'confirm').mockReturnValue(false);
+  const a = actions();
+  render(<Accueil etat={etat()} maintenant={maintenant} enCours={true} {...a} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Commencer' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Séance D (optionnelle)' }));
+  expect(window.confirm).toHaveBeenCalledTimes(2);
+  expect(a.onCommencer).not.toHaveBeenCalled();
 });
