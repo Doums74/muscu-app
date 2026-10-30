@@ -95,6 +95,11 @@ export const BIBLIOTHEQUE: Exercice[] = [
     video: yt('lat pulldown technique'),
   },
   {
+    id: 'nordic-assiste', nom: 'Nordic assisté (ischios)', bloc: 'force', mesure: 'reps', increment: 0, risqueDos: false,
+    pointsCles: ['À genoux sur un tapis, talons bloqués (partenaire, rouleau d\'une machine ou barre guidée)', 'Descendre le plus lentement possible, corps droit des genoux à la tête, en freinant avec les ischios', 'Se rattraper avec les mains en pompe, remonter en s\'aidant des bras : on ne travaille que la descente'],
+    video: yt('nordic hamstring curl débutant assisté'),
+  },
+  {
     id: 'presse-cuisses', nom: 'Presse à cuisses', bloc: 'force', mesure: 'reps', increment: 5, risqueDos: false,
     pointsCles: ['Pieds largeur d\'épaules au milieu de la plateforme', 'Descendre tant que le bas du dos reste collé au dossier', 'Pousser sans verrouiller les genoux en haut'],
     video: yt('leg press technique'),
@@ -177,6 +182,11 @@ export const BIBLIOTHEQUE: Exercice[] = [
     id: 'marche-valise', nom: 'Marche valise (un haltère)', bloc: 'gainage', mesure: 'secondes', increment: 2, risqueDos: false,
     pointsCles: ['Un haltère lourd d\'un seul côté', 'Marcher droit, épaules à l\'horizontale', 'Ne pas se pencher vers l\'haltère (temps par côté)'],
     video: yt('suitcase carry technique'),
+  },
+  {
+    id: 'planche-copenhague', nom: 'Planche de Copenhague (adducteurs)', bloc: 'gainage', mesure: 'secondes', increment: 0, risqueDos: false,
+    pointsCles: ['Sur le côté, avant-bras au sol, genou du dessus posé sur un banc (version courte pour débuter)', 'Lever les hanches : c\'est l\'intérieur de la cuisse du dessus qui porte le corps', 'Corps aligné, hanches hautes ; pied sur le banc seulement quand le genou devient facile (temps par côté)'],
+    video: yt('copenhagen plank short lever débutant'),
   },
   {
     id: 'pont-fessier', nom: 'Pont fessier', bloc: 'gainage', mesure: 'reps', increment: 0, risqueDos: false,

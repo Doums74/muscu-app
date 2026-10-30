@@ -35,3 +35,8 @@ test('trouverExercice renvoie undefined pour un id inconnu', () => {
 test('corde a sauter : echauffement chronometre au poids du corps', () => {
   expect(trouverExercice('corde-a-sauter')).toMatchObject({ bloc: 'echauffement', mesure: 'secondes', increment: 0, risqueDos: false });
 });
+
+test('prevention foot : nordic assiste (ischios) et planche de Copenhague (adducteurs)', () => {
+  expect(trouverExercice('nordic-assiste')).toMatchObject({ bloc: 'force', mesure: 'reps', increment: 0, risqueDos: false });
+  expect(trouverExercice('planche-copenhague')).toMatchObject({ bloc: 'gainage', mesure: 'secondes', increment: 0, risqueDos: false });
+});
