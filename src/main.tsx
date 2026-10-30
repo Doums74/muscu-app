@@ -8,6 +8,8 @@ import { CLES, stockageNavigateur } from './stockage/local';
 import { Accueil, type Ecran } from './ui/Accueil';
 import { Configuration } from './ui/Configuration';
 import { FinSeance } from './ui/FinSeance';
+import { Historique } from './ui/Historique';
+import { Progression } from './ui/Progression';
 import { SeanceEnCours, type EtatSeance } from './ui/SeanceEnCours';
 import './style.css';
 
@@ -80,6 +82,10 @@ function App() {
       />
     );
 
+  if (vue.nom === 'historique') return <Historique historique={etat.historique} onRetour={() => setVue({ nom: 'accueil' })} />;
+  if (vue.nom === 'progression')
+    return <Progression programme={etat.programme} historique={etat.historique} onRetour={() => setVue({ nom: 'accueil' })} />;
+
   return (
     <>
       {demo && <p class="bandeau">Mode démo — rien n'est enregistré.</p>}
@@ -92,7 +98,7 @@ function App() {
           setVue({ nom: 'seance', seance, douleurDos });
         }}
         onReprendre={() => enCours && setVue({ nom: 'seance', seance: enCours.seance, douleurDos: enCours.douleurDos })}
-        onNaviguer={ecran => setVue(ecran === 'reglages' ? { nom: 'config' } : { nom: 'accueil' })}
+        onNaviguer={ecran => setVue(ecran === 'reglages' ? { nom: 'config' } : { nom: ecran })}
       />
     </>
   );
