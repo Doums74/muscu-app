@@ -117,3 +117,8 @@ test('programme sans seance D ou D sans gainage -> erreur', () => {
   expect(validerProgramme(p).programme).toBeNull();
   expect(validerProgramme({ ...programme(), seances: { A: [], B: [], C: [] } }).programme).toBeNull();
 });
+
+test('le programme de demo respecte les garde-fous', async () => {
+  const { PROGRAMME_DEMO } = await import('../../src/demo');
+  expect(validerProgramme(PROGRAMME_DEMO).erreurs).toEqual([]);
+});

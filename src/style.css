@@ -1,0 +1,112 @@
+:root {
+  --fond: #0f1115;
+  --carte: #1a1d24;
+  --bord: #2a2e38;
+  --texte: #f2f3f5;
+  --discret: #9aa0ab;
+  --accent: #4f9cff;
+  --facile: #2e9e5b;
+  --correct: #c99a1e;
+  --dur: #d4453b;
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-size: 17px;
+  line-height: 1.4;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ecran {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100dvh;
+}
+
+h1 { font-size: 1.6rem; margin: 4px 0; }
+h2 { font-size: 1.5rem; margin: 0; }
+
+button {
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+  color: var(--texte);
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 0 16px;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; }
+button.principal { background: var(--accent); border-color: var(--accent); color: #fff; font-size: 1.15rem; }
+button.discret { background: transparent; border: none; color: var(--discret); min-height: 44px; font-weight: 500; }
+button.actif { border-color: var(--accent); background: #1d2c44; }
+
+input {
+  width: 100%;
+  min-height: 56px;
+  border-radius: 12px;
+  border: 1px solid var(--bord);
+  background: var(--fond);
+  color: var(--texte);
+  font-size: 1.4rem;
+  padding: 0 14px;
+  margin-top: 6px;
+}
+
+label { display: block; color: var(--discret); font-size: 0.95rem; }
+form { display: flex; flex-direction: column; gap: 14px; }
+
+.carte { background: var(--carte); border: 1px solid var(--bord); border-radius: 16px; padding: 14px 16px; }
+.carte p { margin: 0 0 8px; }
+.meta, .note, .bloc, .progression-seance, .ensuite { color: var(--discret); margin: 0; }
+.message { color: var(--texte); font-style: italic; }
+.bandeau { background: #1d2c44; border-radius: 12px; padding: 10px 14px; margin: 0; }
+.bandeau.erreur { background: #46201d; }
+.bandeau.attente { background: #3f3416; }
+.avertissements { color: var(--correct); font-size: 0.9rem; padding-left: 18px; }
+.apercu { padding-left: 20px; margin: 8px 0 0; }
+.apercu li { margin-bottom: 4px; }
+
+.entete { display: flex; justify-content: space-between; align-items: center; }
+.regularite { background: var(--carte); border: 1px solid var(--bord); border-radius: 999px; padding: 6px 12px; font-weight: 600; }
+.choix { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.navigation { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: auto; }
+.navigation button { min-height: 48px; font-size: 0.9rem; }
+
+.seance .serie { font-size: 1.1rem; margin: 0; }
+.seance .cible { font-size: 2.4rem; font-weight: 800; margin: 4px 0; }
+.technique { background: var(--carte); border-radius: 12px; padding: 10px 14px; }
+.technique summary { font-weight: 600; cursor: pointer; }
+.technique a { color: var(--accent); }
+.saisie { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.difficultes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.difficultes button { min-height: 72px; font-size: 1.1rem; color: #fff; }
+.difficultes .facile { background: var(--facile); border-color: var(--facile); }
+.difficultes .correct { background: var(--correct); border-color: var(--correct); }
+.difficultes .dur { background: var(--dur); border-color: var(--dur); }
+
+.repos { justify-content: center; text-align: center; }
+.repos .chrono { font-size: 6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.recap { padding-left: 18px; }
+.recap ul { padding-left: 18px; color: var(--discret); }
+.recap li.dur { color: var(--dur); }
+.chargement { color: var(--discret); text-align: center; margin-top: 40vh; }
+
+.graphique { width: 100%; height: auto; }
+.graphique .ligne { fill: none; stroke: var(--accent); stroke-width: 2.5; }
+.graphique .point { fill: var(--accent); }
+.graphique text { fill: var(--discret); font-size: 11px; }
+.historique li { list-style: none; }
+.historique summary { cursor: pointer; padding: 6px 0; }
