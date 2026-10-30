@@ -166,3 +166,23 @@ test('echauffement : manche raccourcie -> meme duree', () => {
   const h = [cordeFaite([210, 150, 210], 210)];
   expect(genererSeanceLocale(avecCorde(), h, 'B', maintenant).exercices[0].series[0].reps).toBe(210);
 });
+
+const cardioD = (exerciceId: string, repsMin: number, repsMax: number) => {
+  const p = programme();
+  p.seances.D = [{ exerciceId, series: 1, repsMin, repsMax, chargeDepart: 0, repos: 30 }];
+  return p;
+};
+const fait = (exerciceId: string, secondes: number) => {
+  const h = realisee(exerciceId, [serie(secondes, 0)], 'b1', 'D');
+  h.exercices[0].prevu.series = [{ reps: secondes, charge: 0 }];
+  return h;
+};
+
+test('cardio : velo 15 min -> +90 s, plafonne a 25 min', () => {
+  expect(genererSeanceLocale(cardioD('velo', 900, 1500), [fait('velo', 900)], 'D', maintenant).exercices[0].series[0].reps).toBe(990);
+  expect(genererSeanceLocale(cardioD('velo', 900, 1500), [fait('velo', 1500)], 'D', maintenant).exercices[0].series[0].reps).toBe(1500);
+});
+
+test('cardio : rameur 1 min -> +15 s', () => {
+  expect(genererSeanceLocale(cardioD('rameur', 60, 90), [fait('rameur', 60)], 'D', maintenant).exercices[0].series[0].reps).toBe(75);
+});

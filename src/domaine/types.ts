@@ -1,4 +1,4 @@
-export type Bloc = 'echauffement' | 'explosivite' | 'force' | 'unilateral' | 'gainage';
+export type Bloc = 'echauffement' | 'cardio' | 'explosivite' | 'force' | 'unilateral' | 'gainage';
 export type TypeSeance = 'A' | 'B' | 'C' | 'D';
 export type Difficulte = 'facile' | 'correct' | 'dur';
 export type Mesure = 'reps' | 'secondes';

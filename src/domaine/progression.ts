@@ -24,7 +24,11 @@ function exerciceSuivant(ep: ExerciceProgramme, historique: SeanceRealisee[], se
     charge = 0;
     reps = ep.repsMin;
     if (derniere) {
-      const pas = def?.bloc === 'echauffement' ? 30 : def?.mesure === 'secondes' ? 5 : 1;
+      // Cardio : +10 % de la durée de départ par séance réussie (au moins 15 s), arrondi à 5 s.
+      const pas =
+        def?.bloc === 'echauffement' ? 30
+        : def?.bloc === 'cardio' ? Math.max(15, Math.round((ep.repsMin * 0.1) / 5) * 5)
+        : def?.mesure === 'secondes' ? 5 : 1;
       const cibles = derniere.prevu.series.map(s => s.reps);
       const cibleAtteinte =
         derniere.series.length >= cibles.length && derniere.series.every((s, i) => s.reps >= (cibles[i] ?? cibles[0]));

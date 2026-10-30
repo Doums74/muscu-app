@@ -40,3 +40,8 @@ test('prevention foot : nordic assiste (ischios) et planche de Copenhague (adduc
   expect(trouverExercice('nordic-assiste')).toMatchObject({ bloc: 'force', mesure: 'reps', increment: 0, risqueDos: false });
   expect(trouverExercice('planche-copenhague')).toMatchObject({ bloc: 'gainage', mesure: 'secondes', increment: 0, risqueDos: false });
 });
+
+test('cardio chronometre : shadow boxing, rameur, velo, tapis', () => {
+  for (const id of ['shadow-boxing', 'rameur', 'velo', 'tapis-course'])
+    expect(trouverExercice(id), id).toMatchObject({ bloc: 'cardio', mesure: 'secondes', increment: 0, risqueDos: false });
+});

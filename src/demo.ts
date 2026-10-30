@@ -13,7 +13,7 @@ export const PROGRAMME_DEMO: Programme = {
     A: [ep('corde-a-sauter', 3, 180, 300, 0, 60), ep('saut-boite', 3, 3, 5, 0, 90), ep('goblet-squat', 3, 6, 8, 12, 150), ep('developpe-couche-halteres', 3, 6, 8, 12, 150), ep('fente-arriere', 2, 8, 10, 6, 75), ep('bird-dog', 2, 6, 8, 0, 45)],
     B: [ep('corde-a-sauter', 3, 180, 300, 0, 60), ep('lancer-rotatif-medecine-ball', 3, 5, 6, 4, 90), ep('hip-thrust', 3, 6, 8, 30, 150), ep('tirage-vertical', 3, 6, 8, 30, 150), ep('fente-laterale', 2, 8, 10, 6, 75), ep('pallof-press', 2, 8, 10, 7.5, 45)],
     C: [ep('corde-a-sauter', 3, 180, 300, 0, 60), ep('saut-lateral', 3, 4, 6, 0, 90), ep('presse-cuisses', 3, 6, 8, 60, 150), ep('rowing-poitrine-appuyee', 3, 6, 8, 10, 150), ep('step-up', 2, 8, 10, 6, 75), ep('mcgill-curl-up', 2, 5, 6, 0, 45)],
-    D: [ep('corde-a-sauter', 3, 180, 300, 0, 60), ep('planche', 3, 20, 40, 0, 45), ep('planche-laterale', 2, 15, 30, 0, 45), ep('dead-bug', 2, 6, 10, 0, 45), ep('pont-fessier', 2, 10, 15, 0, 45)],
+    D: [ep('corde-a-sauter', 3, 180, 300, 0, 60), ep('shadow-boxing', 3, 120, 180, 0, 60), ep('rameur', 6, 60, 90, 0, 60), ep('velo', 1, 900, 1500, 0, 60), ep('planche-laterale', 2, 20, 30, 0, 45)],
   },
 };
 

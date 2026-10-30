@@ -8,7 +8,7 @@ import { realisee } from '../aides';
 
 const ep = (exerciceId: string, repos: number): ExerciceProgramme => ({ exerciceId, series: 3, repsMin: 6, repsMax: 8, chargeDepart: 10, repos });
 const complete = () => [ep('saut-boite', 100), ep('squat-barre', 150), ep('fente-arriere', 75), ep('bird-dog', 50)];
-const programme: Programme = { blocId: 'b1', debut: '2026-11-02', seances: { A: complete(), B: complete(), C: complete(), D: [ep('planche', 50)] } };
+const programme: Programme = { blocId: 'b1', debut: '2026-11-02', seances: { A: complete(), B: complete(), C: complete(), D: [ep('rameur', 60), ep('planche', 50)] } };
 const seance = (charge: number, blocId = 'b1'): SeancePrevue => ({
   id: '2026-11-04-B', type: 'B', blocId, semaine: 1, source: 'claude', genereeLe: '2026-11-03',
   exercices: [{ exerciceId: 'squat-barre', series: [{ reps: 8, charge }], repsMin: 6, repsMax: 8, repos: 150 }],

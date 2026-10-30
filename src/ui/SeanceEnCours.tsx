@@ -28,12 +28,15 @@ export interface EtatSeance {
   debutEffort?: number | null; // échauffement chronométré en cours
 }
 
-export const NOMS_BLOCS = { echauffement: 'Échauffement', explosivite: 'Explosivité', force: 'Force', unilateral: 'Unilatéral', gainage: 'Gainage · bas du dos' } as const;
+export const NOMS_BLOCS = { echauffement: 'Échauffement', cardio: 'Cardio', explosivite: 'Explosivité', force: 'Force', unilateral: 'Unilatéral', gainage: 'Gainage · bas du dos' } as const;
+
+/** Échauffement et cardio se font au chrono (Démarrer / Arrêter), sans saisie. */
+export const estChronometre = (def?: { bloc: string }) => def?.bloc === 'echauffement' || def?.bloc === 'cardio';
 
 export function cible(ex: ExercicePrevu, iSerie: number): string {
   const def = trouverExercice(ex.exerciceId);
   const s = ex.series[iSerie];
-  if (def?.bloc === 'echauffement') return formaterDuree(s.reps);
+  if (estChronometre(def)) return formaterDuree(s.reps);
   if (def?.mesure === 'secondes') return s.charge > 0 ? `${s.reps} s · ${s.charge} kg` : `${s.reps} s`;
   return def && def.increment > 0 ? `${s.reps} reps · ${s.charge} kg` : `${s.reps} reps`;
 }
@@ -191,7 +194,7 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, onAbandon, stock
         </p>
         <div class="chrono">{formaterDuree(restant)}</div>
         <button class="principal" onClick={() => enregistrer({ reps: ecoule(), charge: 0, difficulte: 'correct' })}>
-          Arrêter l'échauffement
+          {def?.bloc === 'echauffement' ? "Arrêter l'échauffement" : 'Arrêter'}
         </button>
       </main>
     );
@@ -217,11 +220,11 @@ export function SeanceEnCours({ seance, douleurDos, onTerminer, onAbandon, stock
     );
   }
 
-  if (def?.bloc === 'echauffement') {
+  if (def && estChronometre(def)) {
     return (
       <main class="ecran seance">
         {barre}
-        <p class="bloc">{NOMS_BLOCS.echauffement}</p>
+        <p class="bloc">{NOMS_BLOCS[def.bloc]}</p>
         <h2>{def.nom}</h2>
         <p class="serie">
           Manche {etat.iSerie + 1}/{ex.series.length}

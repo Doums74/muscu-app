@@ -8,7 +8,7 @@ function seance(exercices: SeancePrevue['exercices'], semaine = 1): SeancePrevue
 const prevue = (id: string, charge: number, semaine = 1) => seance([prevuDe(id, charge)], semaine);
 
 test('plages de repos', () => {
-  expect(PLAGES_REPOS).toEqual({ echauffement: [30, 120], explosivite: [90, 120], force: [120, 180], unilateral: [60, 90], gainage: [45, 60] });
+  expect(PLAGES_REPOS).toEqual({ echauffement: [30, 120], cardio: [15, 120], explosivite: [90, 120], force: [120, 180], unilateral: [60, 90], gainage: [45, 60] });
 });
 
 test('plafonne une hausse de charge a +5 % ou un increment', () => {
@@ -97,7 +97,7 @@ const ep = (exerciceId: string, repos: number, repsMin = 6, repsMax = 8): Exerci
 const seanceComplete = () => [ep('saut-boite', 100), ep('goblet-squat', 150), ep('fente-arriere', 75), ep('bird-dog', 50)];
 
 function programme(): Programme {
-  return { blocId: 'b1', debut: '2026-11-02', seances: { A: seanceComplete(), B: seanceComplete(), C: seanceComplete(), D: [ep('planche', 50, 20, 40)] } };
+  return { blocId: 'b1', debut: '2026-11-02', seances: { A: seanceComplete(), B: seanceComplete(), C: seanceComplete(), D: [ep('rameur', 60, 60, 90), ep('planche', 50, 20, 40)] } };
 }
 
 test('programme valide', () => {
@@ -134,7 +134,7 @@ test('programme avec 0 serie, repsMin 0 ou charge negative -> erreurs', () => {
   expect(r.erreurs.length).toBeGreaterThanOrEqual(3);
 });
 
-test('programme sans seance D ou D sans gainage -> erreur', () => {
+test('programme sans seance D ou D sans cardio -> erreur', () => {
   const p = programme();
   p.seances.D = [ep('goblet-squat', 150)];
   expect(validerProgramme(p).programme).toBeNull();
@@ -168,4 +168,17 @@ test('echauffement place apres un autre bloc -> erreur d\'ordre', () => {
   const p = programme();
   p.seances.A = [p.seances.A[0], { ...ep('corde-a-sauter', 60, 900, 900), chargeDepart: 0 }, ...p.seances.A.slice(1)];
   expect(validerProgramme(p).programme).toBeNull();
+});
+
+test('seance D 100 % gainage (ancien format) -> erreur : il faut du cardio', () => {
+  const p = programme();
+  p.seances.D = [ep('planche', 50, 20, 40)];
+  expect(validerProgramme(p).erreurs.join(' ')).toContain('cardio');
+});
+
+test('cardio long accepte : 15 min de velo', () => {
+  const velo = { exerciceId: 'velo', series: [{ reps: 900, charge: 0 }], repsMin: 900, repsMax: 1500, repos: 30 };
+  const r = validerSeance(seance([velo]), []);
+  expect(r.seance!.exercices[0].series[0].reps).toBe(900);
+  expect(r.avertissements).toEqual([]);
 });

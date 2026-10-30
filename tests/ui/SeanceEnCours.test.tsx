@@ -180,3 +180,16 @@ test('echauffement en cours : repris apres rechargement', () => {
   render(<SeanceEnCours {...props} />);
   expect(screen.getByText('14:00')).toBeTruthy();
 });
+
+test('cardio : chrono comme l\'echauffement, bouton Arreter', () => {
+  let t = 0;
+  let resultat: SeanceRealisee | null = null;
+  const rameur = { exerciceId: 'rameur', series: [{ reps: 60, charge: 0 }], repsMin: 60, repsMax: 90, repos: 60 };
+  render(<SeanceEnCours seance={seance([rameur])} douleurDos={false} onTerminer={s => (resultat = s)} stockage={stockageMemoire()} maintenant={() => t} />);
+  expect(screen.getByText('Cardio')).toBeTruthy();
+  expect(screen.getByText('1:00')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Démarrer' }));
+  t = 45_000;
+  fireEvent.click(screen.getByRole('button', { name: 'Arrêter' }));
+  expect(resultat!.exercices[0].series).toEqual([{ reps: 45, charge: 0, difficulte: 'correct' }]);
+});

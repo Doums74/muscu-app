@@ -11,6 +11,28 @@ export const BIBLIOTHEQUE: Exercice[] = [
     video: yt('corde à sauter technique débutant boxe'),
   },
 
+  // --- Cardio (chronométré) ---
+  {
+    id: 'shadow-boxing', nom: 'Shadow boxing', bloc: 'cardio', mesure: 'secondes', increment: 0, risqueDos: false,
+    pointsCles: ['En garde, poids sur l\'avant des pieds, toujours en mouvement', 'Enchaîne jab, direct, crochets en revenant en garde à chaque coup', 'Rythme d\'un round : soutenu mais régulier, respire en frappant'],
+    video: yt('shadow boxing débutant round'),
+  },
+  {
+    id: 'rameur', nom: 'Rameur (fractionné)', bloc: 'cardio', mesure: 'secondes', increment: 0, risqueDos: false,
+    pointsCles: ['Ordre de la tirée : jambes, puis buste, puis bras ; retour dans l\'ordre inverse', 'Dos droit, on ne tire jamais en arrondissant le bas du dos', 'Fort pendant le temps d\'effort, très tranquille pendant le repos'],
+    video: yt('rameur concept2 technique débutant'),
+  },
+  {
+    id: 'velo', nom: 'Vélo (endurance)', bloc: 'cardio', mesure: 'secondes', increment: 0, risqueDos: false,
+    pointsCles: ['Selle réglée : jambe presque tendue en bas du coup de pédale', 'Allure où tu peux encore parler par phrases (zone 2)', 'Cadence régulière, autour de 80-90 tours/min'],
+    video: yt('vélo zone 2 endurance explication'),
+  },
+  {
+    id: 'tapis-course', nom: 'Tapis de course', bloc: 'cardio', mesure: 'secondes', increment: 0, risqueDos: false,
+    pointsCles: ['Inclinaison 1 % pour simuler l\'extérieur', 'Foulée courte, pose du pied sous le corps', 'Endurance : allure où tu peux parler ; fractionné : fort sur le temps d\'effort'],
+    video: yt('course tapis technique débutant'),
+  },
+
   // --- Explosivité ---
   {
     id: 'saut-boite', nom: 'Saut sur box', bloc: 'explosivite', mesure: 'reps', increment: 0, risqueDos: false,
