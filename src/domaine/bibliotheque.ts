@@ -97,6 +97,11 @@ export const BIBLIOTHEQUE: Exercice[] = [
     video: yt('développé couché haltères technique'),
   },
   {
+    id: 'developpe-incline-barre', nom: 'Développé incliné barre', bloc: 'force', mesure: 'reps', increment: 2.5, risqueDos: false,
+    pointsCles: ['Banc à 30°, omoplates serrées, pieds au sol', 'Descendre la barre en haut de la poitrine, coudes à 45°', 'Pousser sans décoller les fesses du banc ni rebondir'],
+    video: yt('développé incliné barre technique'),
+  },
+  {
     id: 'developpe-epaules-assis', nom: 'Développé épaules assis (haltères)', bloc: 'force', mesure: 'reps', increment: 2, risqueDos: false,
     pointsCles: ['Assis dos contre le dossier, abdos serrés', 'Pousser les haltères au-dessus de la tête', 'Ne pas cambrer le bas du dos pour finir la répétition'],
     video: yt('seated dumbbell shoulder press technique'),
