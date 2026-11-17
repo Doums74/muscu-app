@@ -97,6 +97,11 @@ export const BIBLIOTHEQUE: Exercice[] = [
     video: yt('développé couché haltères technique'),
   },
   {
+    id: 'developpe-couche-barre', nom: 'Développé couché barre', bloc: 'force', mesure: 'reps', increment: 2.5, risqueDos: false,
+    pointsCles: ['Omoplates serrées, pieds au sol, yeux sous la barre', 'Descendre la barre au bas des pectoraux, coudes à 45°', 'Pousser sans décoller les fesses du banc ni rebondir sur la poitrine'],
+    video: yt('développé couché barre technique débutant'),
+  },
+  {
     id: 'developpe-incline-barre', nom: 'Développé incliné barre', bloc: 'force', mesure: 'reps', increment: 2.5, risqueDos: false,
     pointsCles: ['Banc à 30°, omoplates serrées, pieds au sol', 'Descendre la barre en haut de la poitrine, coudes à 45°', 'Pousser sans décoller les fesses du banc ni rebondir'],
     video: yt('développé incliné barre technique'),
