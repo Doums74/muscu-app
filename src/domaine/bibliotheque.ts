@@ -122,6 +122,11 @@ export const BIBLIOTHEQUE: Exercice[] = [
     video: yt('lat pulldown technique'),
   },
   {
+    id: 'leg-curl', nom: 'Leg curl (machine ischios)', bloc: 'force', mesure: 'reps', increment: 2.5, risqueDos: false,
+    pointsCles: ['Genoux alignés sur l\'axe de la machine, boudin juste au-dessus des talons', 'Plier les genoux en 1 s, revenir en 3 s en freinant : la descente protège les ischios', 'Bassin plaqué sur le siège ou le banc, ne pas décoller les hanches'],
+    video: yt('leg curl machine technique'),
+  },
+  {
     id: 'nordic-assiste', nom: 'Nordic assisté (ischios)', bloc: 'force', mesure: 'reps', increment: 0, risqueDos: false,
     pointsCles: ['À genoux sur un tapis, talons bloqués (partenaire, rouleau d\'une machine ou barre guidée)', 'Descendre le plus lentement possible, corps droit des genoux à la tête, en freinant avec les ischios', 'Se rattraper avec les mains en pompe, remonter en s\'aidant des bras : on ne travaille que la descente'],
     video: yt('nordic hamstring curl débutant assisté'),
